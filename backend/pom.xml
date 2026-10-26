@@ -41,13 +41,14 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok (To reduce boilerplate getters/setters) -->
+        <!-- Apache PDFBox for RAG PDF Text Extraction -->
         <dependency>
-            <groupId>org.groupId</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.1</version>
         </dependency>
 
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
