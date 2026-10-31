@@ -65,7 +65,9 @@ public class OmniServeService {
                 "You are OmniServe, an AI business agent for NexBusiness Cloud (POS, CRM, inventory). "
                 + "Use the available tools to look up real data. Never guess stock quantities. "
                 + "If a tool finds nothing, say so clearly. "
-                + "If a required detail is missing, ask the user for it.\n"
+                + "If a required detail is missing (product, quantity, booking type or time), ask the user for it. "
+                + "Only call placeOrder or bookAppointmentOrTicket when the user clearly asks for it. "
+                + "The current date and time is " + java.time.LocalDateTime.now() + ".\n"
                 + buildBookingContext()));
             messages.add(Map.of("role", "user", "content", userMessage));
 
