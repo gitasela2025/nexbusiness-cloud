@@ -1,5 +1,9 @@
 package com.nexlora.nexbusiness.service;
 
+
+import org.springframework.beans.factory.annotation.Autowired;
+import com.nexlora.nexbusiness.repository.ProductInventoryRepository;
+import com.nexlora.nexbusiness.repository.CrmBookingRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,44 @@ public class OmniServeService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @Autowired
+    private ProductInventoryRepository inventoryRepository;
+
+    @Autowired
+    private CrmBookingRepository bookingRepository;
+
+    private String buildBusinessContext() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("STOCK LEVELS:\n");
+        inventoryRepository.findAll().forEach(p -> {
+            sb.append("- ").append(p.getName())
+              .append(" (SKU ").append(p.getSku()).append(")")
+              .append(", branch ").append(p.getBranchId())
+              .append(": ").append(p.getStockQty()).append(" in stock")
+              .append(", reorder level ").append(p.getReorderLevel());
+            if (p.getStockQty() <= p.getReorderLevel()) {
+                sb.append(" [LOW STOCK]");
+            }
+            sb.append("\n");
+        });
+
+        sb.append("\nBOOKINGS AND TICKETS:\n");
+        bookingRepository.findAll().forEach(b -> {
+            sb.append("- #").append(b.getId())
+              .append(" ").append(b.getType())
+              .append(" (").append(b.getStatus()).append(")")
+              .append(": ").append(b.getDescription());
+            if (b.getScheduledTime() != null) {
+                sb.append(", scheduled ").append(b.getScheduledTime());
+            }
+            sb.append("\n");
+        });
+
+        return sb.toString();
+    }
+
+
     public String askAgent(String userMessage) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -28,9 +70,12 @@ public class OmniServeService {
 
             // Constructing OpenAI-compatible payload for Groq (Llama-3)
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", "llama3-70b-8192");
+            requestBody.put("model", "openai/gpt-oss-120b");
             requestBody.put("messages", List.of(
-                Map.of("role", "system", "content", "You are OmniServe, an AI business automation agent for NexBusiness Cloud, helping with POS, CRM, and inventory."),
+                Map.of("role", "system", "content",
+                    "You are OmniServe, an AI business automation agent for NexBusiness Cloud, "
+                    + "helping with POS, CRM, and inventory. Answer using ONLY the data below. "
+                    + "If the data does not contain the answer, say so.\n\n" + buildBusinessContext()),
                 Map.of("role", "user", "content", userMessage)
             ));
             requestBody.put("temperature", 0.7);

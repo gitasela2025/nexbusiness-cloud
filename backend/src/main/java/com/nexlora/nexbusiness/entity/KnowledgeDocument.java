@@ -1,38 +1,45 @@
 package com.nexlora.nexbusiness.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "knowledge_documents")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class KnowledgeDocument {
+
     @Id
-    @Column(name = "doc_id", length = 100)
     private String docId;
 
-    @Column(name = "file_name", nullable = false)
     private String fileName;
 
-    @Column(name = "project_namespace", nullable = false, length = 100)
     private String projectNamespace;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "access_role", nullable = false)
-    private AccessRole accessRole = AccessRole.PUBLIC;
+    private AccessRole accessRole;
 
-    @Column(nullable = false)
-    private Integer version = 1;
+    private int version;
 
-    @Column(name = "uploaded_at", updatable = false)
     private LocalDateTime uploadedAt = LocalDateTime.now();
 
     public enum AccessRole {
-        PUBLIC, ADMIN_ONLY
+        ADMIN_ONLY, PUBLIC
     }
+
+    public String getDocId() { return docId; }
+    public void setDocId(String docId) { this.docId = docId; }
+
+    public String getFileName() { return fileName; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
+
+    public String getProjectNamespace() { return projectNamespace; }
+    public void setProjectNamespace(String projectNamespace) { this.projectNamespace = projectNamespace; }
+
+    public AccessRole getAccessRole() { return accessRole; }
+    public void setAccessRole(AccessRole accessRole) { this.accessRole = accessRole; }
+
+    public int getVersion() { return version; }
+    public void setVersion(int version) { this.version = version; }
+
+    public LocalDateTime getUploadedAt() { return uploadedAt; }
+    public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
 }
