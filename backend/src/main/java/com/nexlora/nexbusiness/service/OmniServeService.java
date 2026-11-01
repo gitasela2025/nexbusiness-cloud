@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexlora.nexbusiness.agent.Tool;
 import com.nexlora.nexbusiness.agent.ToolRegistry;
-import com.nexlora.nexbusiness.repository.CrmBookingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,24 +35,6 @@ public class OmniServeService {
     @Autowired
     private ToolRegistry toolRegistry;
 
-    @Autowired
-    private CrmBookingRepository bookingRepository;
-
-    private String buildBookingContext() {
-        StringBuilder sb = new StringBuilder("\nBOOKINGS AND TICKETS:\n");
-        bookingRepository.findAll().forEach(b -> {
-            sb.append("- #").append(b.getId())
-              .append(" ").append(b.getType())
-              .append(" (").append(b.getStatus()).append(")")
-              .append(": ").append(b.getDescription());
-            if (b.getScheduledTime() != null) {
-                sb.append(", scheduled ").append(b.getScheduledTime());
-            }
-            sb.append("\n");
-        });
-        return sb.toString();
-    }
-
     public String askAgent(String userMessage) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -69,11 +50,14 @@ public class OmniServeService {
                 + "Only call placeOrder or bookAppointmentOrTicket when the user clearly asks for it. "
                 + "Stock quantities are in units of the product as named, for example one unit of 'Paper Cups (50pk)' is one pack. "
                 + "If stock is not enough for an order, tell the user and offer to raise a purchase order with requestPurchaseOrder. "
+                + "Before raising a purchase order, call checkStock to confirm stock is really low (at or below the reorder level). "
+                + "If stock is healthy, tell the user and do not raise the request. "
+                + "For questions about appointments or tickets, call listBookings. "
                 + "Refunds and purchase orders are never executed directly: use requestRefundApproval or requestPurchaseOrder, "
                 + "then tell the user the request is waiting for Admin approval. Never say a refund or purchase order is done. "
                 + "A refund needs an order id and a reason, ask the user if either is missing. "
                 + "The current date and time is " + java.time.LocalDateTime.now() + ".\n"
-                + buildBookingContext()));
+                ));
             messages.add(Map.of("role", "user", "content", userMessage));
 
             for (int step = 1; step <= MAX_ITERATIONS; step++) {
