@@ -8,13 +8,29 @@ body {
 
 body {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #fecaca 0%, #fef9c3 50%, #bbf7d0 100%) fixed;
+  background: #fbf7f1;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
 }
 
 #root {
   height: 100%;
+}
+
+/* Sidebar: deep navy -> crimson */
+.sidebar-bg {
+  background: linear-gradient(180deg, #1b2140 0%, #5e1b3b 50%, #8f1c36 100%);
+}
+
+/* Logo badge and active menu item: crimson -> gold */
+.brand-badge {
+  background: linear-gradient(135deg, #c0283f 0%, #e0a21c 100%);
+  box-shadow: 0 4px 12px rgba(192, 40, 63, 0.35);
+}
+
+.nav-active {
+  background: linear-gradient(90deg, #c0283f 0%, #d9951f 100%);
+  box-shadow: 0 4px 12px rgba(192, 40, 63, 0.35);
 }
 
 /* Markdown rendered inside chat bubbles */
@@ -26,10 +42,5 @@ body {
 .md strong { font-weight: 600; }
 .md table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.875rem; width: 100%; }
 .md th, .md td { border: 1px solid #e2e8f0; padding: 0.25rem 0.5rem; text-align: left; }
-.md th { background: #f1f5f9; }
+.md th { background: #fdf3e3; }
 .md code { background: #f1f5f9; border-radius: 4px; padding: 0 4px; font-size: 0.85em; }
-
-/* Sidebar: red -> yellow -> green */
-.sidebar-bg {
-  background: linear-gradient(180deg, #fecaca 0%, #fef9c3 50%, #bbf7d0 100%);
-}
