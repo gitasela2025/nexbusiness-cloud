@@ -67,6 +67,11 @@ public class OmniServeService {
                 + "If a tool finds nothing, say so clearly. "
                 + "If a required detail is missing (product, quantity, booking type or time), ask the user for it. "
                 + "Only call placeOrder or bookAppointmentOrTicket when the user clearly asks for it. "
+                + "Stock quantities are in units of the product as named, for example one unit of 'Paper Cups (50pk)' is one pack. "
+                + "If stock is not enough for an order, tell the user and offer to raise a purchase order with requestPurchaseOrder. "
+                + "Refunds and purchase orders are never executed directly: use requestRefundApproval or requestPurchaseOrder, "
+                + "then tell the user the request is waiting for Admin approval. Never say a refund or purchase order is done. "
+                + "A refund needs an order id and a reason, ask the user if either is missing. "
                 + "The current date and time is " + java.time.LocalDateTime.now() + ".\n"
                 + buildBookingContext()));
             messages.add(Map.of("role", "user", "content", userMessage));
