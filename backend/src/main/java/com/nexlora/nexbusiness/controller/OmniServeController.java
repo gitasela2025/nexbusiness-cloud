@@ -16,13 +16,13 @@ public class OmniServeController {
     private OmniServeService omniServeService;
 
     @PostMapping("/chat")
-    public ResponseEntity<String> chatWithAgent(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> chatWithAgent(@RequestBody Map<String, String> request) {
         String message = request.get("message");
         if (message == null || message.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Message cannot be empty");
         }
-        
-        String aiResponse = omniServeService.askAgent(message);
-        return ResponseEntity.ok(aiResponse);
+
+        // { "reply": "...", "steps": [ {step, tool, args, result, needsApproval} ] }
+        return ResponseEntity.ok(omniServeService.askAgentWithSteps(message));
     }
 }

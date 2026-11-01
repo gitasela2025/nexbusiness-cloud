@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Send, Bot, User } from 'lucide-react';
+import AgentSteps from './AgentSteps';
 
 const SUGGESTIONS = [
-  'How many Paper Cups do we have in stock?',
-  'What appointments do we have scheduled?',
+  'How many Paper Cups do we have, and what appointments are scheduled?',
+  'Order 2 Paper Cups from Colombo',
   'Paper Cups stock is low, raise a purchase order for 40 units.',
 ];
 
@@ -13,7 +14,7 @@ function Message({ message }) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end gap-2">
-        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-rose-600 px-4 py-2 text-sm text-white">
+        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-rose-700 px-4 py-2 text-sm text-white">
           {message.text}
         </div>
         <User size={20} className="mt-1 shrink-0 text-slate-400" />
@@ -29,9 +30,12 @@ function Message({ message }) {
   }
   return (
     <div className="flex gap-2">
-      <Bot size={20} className="mt-1 shrink-0 text-rose-600" />
-      <div className="md max-w-[85%] overflow-x-auto rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-2 text-sm">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+      <Bot size={20} className="mt-1 shrink-0 text-rose-700" />
+      <div className="min-w-0 max-w-[85%]">
+        <AgentSteps steps={message.steps} />
+        <div className="md overflow-x-auto rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-2 text-sm">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );
@@ -59,7 +63,7 @@ export default function ChatPanel({ messages, loading, onSend }) {
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           {messages.length === 0 && (
             <div className="mt-10 text-center">
-              <Bot size={40} className="mx-auto text-rose-600" />
+              <Bot size={40} className="mx-auto text-rose-700" />
               <h2 className="mt-3 text-lg font-semibold">How can OmniServe help?</h2>
               <p className="mt-1 text-sm text-slate-500">
                 Check stock, place orders, book appointments, or request approvals.
@@ -100,7 +104,7 @@ export default function ChatPanel({ messages, loading, onSend }) {
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="flex items-center gap-1 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send size={16} />
             <span className="hidden sm:inline">Send</span>

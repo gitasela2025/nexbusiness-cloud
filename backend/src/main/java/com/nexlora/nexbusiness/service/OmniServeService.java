@@ -2,6 +2,8 @@ package com.nexlora.nexbusiness.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexlora.nexbusiness.agent.AgentResult;
+import com.nexlora.nexbusiness.agent.AgentStep;
 import com.nexlora.nexbusiness.agent.Tool;
 import com.nexlora.nexbusiness.agent.ToolRegistry;
 import org.slf4j.Logger;
@@ -35,7 +37,14 @@ public class OmniServeService {
     @Autowired
     private ToolRegistry toolRegistry;
 
+    // Old entry point: reply text only
     public String askAgent(String userMessage) {
+        return askAgentWithSteps(userMessage).reply();
+    }
+
+    // New entry point: reply text + the tool calls the agent made
+    public AgentResult askAgentWithSteps(String userMessage) {
+        List<AgentStep> steps = new ArrayList<>();
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -60,7 +69,7 @@ public class OmniServeService {
                 ));
             messages.add(Map.of("role", "user", "content", userMessage));
 
-            for (int step = 1; step <= MAX_ITERATIONS; step++) {
+            for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
                 Map<String, Object> body = new HashMap<>();
                 body.put("model", model);
                 body.put("messages", messages);
@@ -72,12 +81,12 @@ public class OmniServeService {
                     groqApiUrl, new HttpEntity<>(body, headers), Map.class);
 
                 if (response.getBody() == null) {
-                    return "Error: Received empty response from Groq AI.";
+                    return new AgentResult("Error: Received empty response from Groq AI.", steps);
                 }
                 List<Map<String, Object>> choices =
                     (List<Map<String, Object>>) response.getBody().get("choices");
                 if (choices == null || choices.isEmpty()) {
-                    return "Error: Received empty response from Groq AI.";
+                    return new AgentResult("Error: Received empty response from Groq AI.", steps);
                 }
 
                 Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
@@ -85,7 +94,8 @@ public class OmniServeService {
 
                 // AI එකට තවත් tool ඕනේ නැත්නම් මෙය අවසන් පිළිතුරයි
                 if (toolCalls == null || toolCalls.isEmpty()) {
-                    return (String) msg.get("content");
+                    Object content = msg.get("content");
+                    return new AgentResult(content == null ? "" : content.toString(), steps);
                 }
 
                 // AI එකේ tool_calls message එක history එකට දමන්න
@@ -102,7 +112,15 @@ public class OmniServeService {
                     String argsJson = (String) fn.get("arguments");
 
                     String result = runTool(toolName, argsJson);
-                    log.info("[AGENT] step {}: {}({}) -> {}", step, toolName, argsJson, result);
+                    log.info("[AGENT] step {}: {}({}) -> {}", steps.size() + 1, toolName, argsJson, result);
+
+                    // UI timeline එක සඳහා සටහන් කරන්න
+                    steps.add(new AgentStep(
+                        steps.size() + 1,
+                        toolName,
+                        parseArgs(argsJson),
+                        parseResult(result),
+                        toolRegistry.get(toolName).map(Tool::requiresApproval).orElse(false)));
 
                     Map<String, Object> toolMsg = new HashMap<>();
                     toolMsg.put("role", "tool");
@@ -112,12 +130,12 @@ public class OmniServeService {
                 }
             }
 
-            return "I could not finish this request within " + MAX_ITERATIONS
-                 + " steps. Please try a simpler request.";
+            return new AgentResult("I could not finish this request within " + MAX_ITERATIONS
+                 + " steps. Please try a simpler request.", steps);
 
         } catch (Exception e) {
             log.error("Agent failed", e);
-            return "Failed to communicate with Groq API: " + e.getMessage();
+            return new AgentResult("Failed to communicate with Groq API: " + e.getMessage(), steps);
         }
     }
 
@@ -130,10 +148,29 @@ public class OmniServeService {
             Map<String, Object> args = (argsJson == null || argsJson.isBlank())
                 ? new HashMap<>()
                 : mapper.readValue(argsJson, new TypeReference<Map<String, Object>>() {});
-            // Day 6: tool.get().requiresApproval() නම් pending_approvals එකට යවන්න
             return tool.get().execute(args);
         } catch (Exception e) {
             return errorJson("Tool failed: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> parseArgs(String argsJson) {
+        if (argsJson == null || argsJson.isBlank()) {
+            return new HashMap<>();
+        }
+        try {
+            return mapper.readValue(argsJson, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
+    }
+
+    // Tool result (JSON text) -> object, so the UI gets real JSON instead of an escaped string
+    private Object parseResult(String result) {
+        try {
+            return mapper.readValue(result, Object.class);
+        } catch (Exception e) {
+            return result;
         }
     }
 

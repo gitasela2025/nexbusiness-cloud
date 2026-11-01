@@ -10,7 +10,7 @@ const NAV = [
 export default function Sidebar({ activeTab, onChange }) {
   return (
     <aside className="sidebar-bg flex w-16 shrink-0 flex-col md:w-64">
-      <div className="flex items-center gap-3 px-4 py-5">
+      <button type="button" onClick={() => onChange('chat')} title="Home" className="flex w-full items-center gap-3 px-4 py-5 text-left">
         <div className="brand-badge flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
           <Bot size={22} className="text-white" />
         </div>
@@ -20,7 +20,7 @@ export default function Sidebar({ activeTab, onChange }) {
             AI Agent Suite
           </div>
         </div>
-      </div>
+      </button>
 
       <div className="hidden px-6 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-widest text-amber-300 md:block">
         Main menu
