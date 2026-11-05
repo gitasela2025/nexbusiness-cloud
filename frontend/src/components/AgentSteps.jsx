@@ -76,6 +76,14 @@ export default function AgentSteps({ steps }) {
                     )}
                   </div>
                   <div className={t.text}>{text}</div>
+                  {s.result && typeof s.result === 'object' && (s.result.requested || s.result.alreadyPending) && (
+                    <a
+                      href="#/approvals"
+                      className="mt-1 inline-block rounded bg-rose-700 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-rose-800"
+                    >
+                      Review in Approvals →
+                    </a>
+                  )}
                   <details className="mt-0.5">
                     <summary className="cursor-pointer text-[11px] text-slate-400">raw result</summary>
                     <pre className="mt-1 overflow-x-auto rounded bg-white p-2 text-[11px] text-slate-600">
