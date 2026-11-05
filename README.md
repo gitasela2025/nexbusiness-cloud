@@ -1,8 +1,42 @@
-# NexBusiness Cloud — Enterprise AI Business Suite (3-in-1 Architecture)
+# NexBusiness Cloud
 
-An enterprise-grade AI Agent & RAG platform built with **Java Spring Boot, React (Vite + Tailwind CSS), MySQL, and Groq (Llama-3) / OpenAI APIs**[cite: 1].
+An AI agent and RAG platform for small businesses, built with Java Spring Boot, React (Vite + Tailwind CSS), MySQL, and the Groq API (Llama-3).
 
-## Core Modules
-1. **SecureDoc RAG Engine:** Multi-project namespacing, role-based access control (`PUBLIC` vs `ADMIN_ONLY`), auto re-indexing, and strict page-level citations[cite: 1, 2].
-2. **OmniServe Action Agent:** Autonomous POS, CRM & ERP tool calling, human-in-the-loop manager approval queue, multi-branch Text-to-SQL BI reporting, and natural language CSV/Excel export[cite: 1, 2].
-3. **MemoryCore Portal:** Long-term user fact extraction, context window optimization, and dynamic LLM model switching[cite: 1, 2].
+## Modules
+
+1. **SecureDoc RAG Engine:** project-based document namespaces, role-based access (PUBLIC vs ADMIN_ONLY), and page-level citations.
+2. **OmniServe Action Agent:** tool-calling agent for POS, CRM and ERP tasks (for example stock checks), with a manager approval queue for sensitive actions.
+3. **MemoryCore Portal:** long-term user fact extraction and switchable LLM models.
+
+## Quick start
+
+1. Copy the example environment file and add your own Groq key:
+
+        cp .env.example .env
+
+2. Start everything:
+
+        docker compose up -d
+
+3. Try the agent (the backend listens on port 8081):
+
+        curl -s -X POST http://localhost:8081/api/omniserve/chat \
+          -H "Content-Type: application/json" \
+          -d '{"message":"How many Paper Cups do we have?"}'
+
+## Demo data
+
+Reset the demo inventory (Paper Cups drops to 3 units so the reorder flow can be shown):
+
+    docker compose exec -T mysql-db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" nexbusiness_db' < scripts/demo-reset.sql
+
+## Configuration
+
+Secrets live in `.env`, which is never committed. See `.env.example` for the variables.
+
+## Screenshots
+
+![Agent steps](docs/screenshots/agent-steps.png)
+![Approval queue](docs/screenshots/approvals.png)
+![MemoryCore](docs/screenshots/memory.png)
+
