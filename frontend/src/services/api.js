@@ -38,3 +38,7 @@ export const getUserMemories = (userId) => {
 export const saveUserMemory = (userId, fact) => {
     return apiClient.post('/memories/save', { userId, fact });
 };
+
+export const deleteUserMemory = (id) => {
+    return apiClient.delete(`/memories/${id}`);
+};

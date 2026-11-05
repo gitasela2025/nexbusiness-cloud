@@ -6,6 +6,8 @@ import com.nexlora.nexbusiness.agent.AgentResult;
 import com.nexlora.nexbusiness.agent.AgentStep;
 import com.nexlora.nexbusiness.agent.Tool;
 import com.nexlora.nexbusiness.agent.ToolRegistry;
+import com.nexlora.nexbusiness.entity.UserMemory;
+import com.nexlora.nexbusiness.repository.UserMemoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,9 @@ public class OmniServeService {
     @Autowired
     private ToolRegistry toolRegistry;
 
+    @Autowired
+    private UserMemoryRepository memoryRepository;
+
     // Old entry point: reply text only
     public String askAgent(String userMessage) {
         return askAgentWithSteps(userMessage).reply();
@@ -65,7 +70,11 @@ public class OmniServeService {
                 + "Refunds and purchase orders are never executed directly: use requestRefundApproval or requestPurchaseOrder, "
                 + "then tell the user the request is waiting for Admin approval. Never say a refund or purchase order is done. "
                 + "A refund needs an order id and a reason, ask the user if either is missing. "
+                + "When the user states a lasting fact about themselves or their preferences (for example their branch, role or preferred currency), call saveMemory once to remember it. "
+                + "Do not save questions, one-off requests, passwords, API keys or card numbers. "
+                + "Use the remembered facts below to personalise answers, and do not ask again for something already remembered. "
                 + "The current date and time is " + java.time.LocalDateTime.now() + ".\n"
+                + buildMemoryContext()
                 ));
             messages.add(Map.of("role", "user", "content", userMessage));
 
@@ -137,6 +146,17 @@ public class OmniServeService {
             log.error("Agent failed", e);
             return new AgentResult("Failed to communicate with Groq API: " + e.getMessage(), steps);
         }
+    }
+
+    // Saved facts about the user, added to every conversation (newest first, max 20)
+    private String buildMemoryContext() {
+        List<UserMemory> memories = memoryRepository.findByUserIdOrderByUpdatedAtDesc(1L);
+        if (memories.isEmpty()) {
+            return "\nREMEMBERED FACTS: none yet.\n";
+        }
+        StringBuilder sb = new StringBuilder("\nREMEMBERED FACTS ABOUT THE USER:\n");
+        memories.stream().limit(20).forEach(m -> sb.append("- ").append(m.getMemoryFact()).append("\n"));
+        return sb.toString();
     }
 
     private String runTool(String toolName, String argsJson) {
