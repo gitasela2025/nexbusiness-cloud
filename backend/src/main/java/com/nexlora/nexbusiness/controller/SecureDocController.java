@@ -4,6 +4,7 @@ import com.nexlora.nexbusiness.service.SecureDocService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,8 +19,9 @@ public class SecureDocController {
     @Autowired
     private SecureDocService secureDocService;
 
-    private static boolean isAdmin(String role) {
-        return "ADMIN".equalsIgnoreCase(role);
+    static boolean isAdmin(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 
     @PostMapping("/upload")
@@ -27,9 +29,9 @@ public class SecureDocController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("namespace") String namespace,
             @RequestParam("accessRole") String accessRole,
-            @RequestHeader(value = "X-Demo-Role", defaultValue = "USER") String role) {
+            Authentication auth) {
 
-        if (!isAdmin(role)) {
+        if (!isAdmin(auth)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only ADMIN can upload documents.");
         }
         String name = file.getOriginalFilename();
@@ -41,26 +43,22 @@ public class SecureDocController {
 
     @PostMapping("/ask")
     public ResponseEntity<SecureDocService.AskResult> ask(
-            @RequestBody Map<String, String> body,
-            @RequestHeader(value = "X-Demo-Role", defaultValue = "USER") String role) {
-
+            @RequestBody Map<String, String> body, Authentication auth) {
         String namespace = body.getOrDefault("namespace", "demo");
         String question = body.getOrDefault("question", "");
-        return ResponseEntity.ok(secureDocService.ask(namespace, question, isAdmin(role)));
+        return ResponseEntity.ok(secureDocService.ask(namespace, question, isAdmin(auth)));
     }
 
     @GetMapping("/documents")
     public ResponseEntity<List<SecureDocService.DocInfo>> list(
             @RequestParam(value = "namespace", defaultValue = "demo") String namespace,
-            @RequestHeader(value = "X-Demo-Role", defaultValue = "USER") String role) {
-        return ResponseEntity.ok(secureDocService.listDocuments(namespace, isAdmin(role)));
+            Authentication auth) {
+        return ResponseEntity.ok(secureDocService.listDocuments(namespace, isAdmin(auth)));
     }
 
     @DeleteMapping("/documents/{docId}")
-    public ResponseEntity<String> delete(
-            @PathVariable String docId,
-            @RequestHeader(value = "X-Demo-Role", defaultValue = "USER") String role) {
-        if (!isAdmin(role)) {
+    public ResponseEntity<String> delete(@PathVariable String docId, Authentication auth) {
+        if (!isAdmin(auth)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only ADMIN can delete documents.");
         }
         return secureDocService.deleteDocument(docId)
