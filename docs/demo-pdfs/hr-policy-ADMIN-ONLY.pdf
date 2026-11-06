@@ -1,0 +1,61 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+5 0 obj
+<< /Length 276 >>
+stream
+BT
+/F1 12 Tf
+50 740 Td
+18 TL
+(HR policy \(confidential, admin only\)) Tj T*
+() Tj T*
+(Salary scale: Store Manager earns LKR 185,000 per month.) Tj T*
+(Salary scale: Cashier earns LKR 85,000 per month.) Tj T*
+(Salary scale: Sales Assistant earns LKR 70,000 per month.) Tj T*
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 297 >>
+stream
+BT
+/F1 12 Tf
+50 740 Td
+18 TL
+(Internal refund rules \(confidential, admin only\)) Tj T*
+() Tj T*
+(Refunds above LKR 50,000 need written approval from the director.) Tj T*
+(Staff discount is 20 percent on all products.) Tj T*
+(Any refund fraud is reported to the director within 24 hours.) Tj T*
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000317 00000 n 
+0000000644 00000 n 
+0000000770 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1118
+%%EOF
