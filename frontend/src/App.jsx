@@ -5,11 +5,13 @@ import Sidebar from './components/Sidebar';
 import ChatPanel from './components/ChatPanel';
 import ApprovalsPanel from './components/ApprovalsPanel';
 import MemoryPanel from './components/MemoryPanel';
+import DocumentsPanel from './components/DocumentsPanel';
 
 const TITLES = {
   chat: 'OmniServe Agent',
   approvals: 'Approval Queue',
   memories: 'MemoryCore',
+  documents: 'SecureDoc RAG',
 };
 
 // URL hash ("#/approvals") නිසා browser Back / Forward බොත්තම් වැඩ කරයි
@@ -81,6 +83,7 @@ function App() {
           )}
           {activeTab === 'approvals' && <ApprovalsPanel />}
           {activeTab === 'memories' && <MemoryPanel />}
+          {activeTab === 'documents' && <DocumentsPanel />}
         </main>
       </div>
     </div>

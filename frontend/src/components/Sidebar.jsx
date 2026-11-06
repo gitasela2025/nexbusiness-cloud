@@ -4,7 +4,7 @@ const NAV = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'approvals', label: 'Approvals', icon: ShieldCheck },
   { id: 'memories', label: 'Memory', icon: Brain },
-  { id: 'documents', label: 'Documents', icon: FileText, soon: true },
+  { id: 'documents', label: 'Documents', icon: FileText },
 ];
 
 export default function Sidebar({ activeTab, onChange }) {

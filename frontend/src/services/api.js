@@ -16,6 +16,25 @@ export const uploadDocument = (formData) => {
     });
 };
 
+export const askDocument = (namespace, question, role) => {
+    return apiClient.post('/securedoc/ask', { namespace, question }, {
+        headers: { 'X-Demo-Role': role },
+    });
+};
+
+export const listDocuments = (namespace, role) => {
+    return apiClient.get('/securedoc/documents', {
+        params: { namespace },
+        headers: { 'X-Demo-Role': role },
+    });
+};
+
+export const deleteDocument = (docId, role) => {
+    return apiClient.delete(`/securedoc/documents/${docId}`, {
+        headers: { 'X-Demo-Role': role },
+    });
+};
+
 // OmniServe AI Agent Chat API
 export const sendAiChat = (message, session) => {
     return apiClient.post('/omniserve/chat', { message, session });

@@ -11,6 +11,10 @@ import java.util.List;
 @Repository
 public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, Long> {
 
+    void deleteByDocId(String docId);
+
+    long countByDocId(String docId);
+
     /** Rows: [content, page_number, file_name]. Access filter lives in SQL, not in the prompt. */
     @Query(value = """
         SELECT c.content, c.page_number, d.file_name

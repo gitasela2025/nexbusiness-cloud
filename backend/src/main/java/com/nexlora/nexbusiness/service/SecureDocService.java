@@ -145,6 +145,32 @@ public class SecureDocService {
         }
     }
 
+    public record DocInfo(String docId, String fileName, String namespace, String accessRole,
+                          String uploadedAt, long chunks) {}
+
+    /** USER sees only PUBLIC documents. ADMIN sees everything in the namespace. */
+    public List<DocInfo> listDocuments(String namespace, boolean isAdmin) {
+        List<KnowledgeDocument> docs = isAdmin
+                ? knowledgeDocumentRepository.findByProjectNamespaceOrderByUploadedAtDesc(namespace)
+                : knowledgeDocumentRepository.findByProjectNamespaceAndAccessRoleOrderByUploadedAtDesc(
+                        namespace, KnowledgeDocument.AccessRole.PUBLIC);
+        List<DocInfo> out = new ArrayList<>();
+        for (KnowledgeDocument d : docs) {
+            out.add(new DocInfo(d.getDocId(), d.getFileName(), d.getProjectNamespace(),
+                    d.getAccessRole().name(), String.valueOf(d.getUploadedAt()),
+                    chunkRepository.countByDocId(d.getDocId())));
+        }
+        return out;
+    }
+
+    @Transactional
+    public boolean deleteDocument(String docId) {
+        if (!knowledgeDocumentRepository.existsById(docId)) return false;
+        chunkRepository.deleteByDocId(docId);
+        knowledgeDocumentRepository.deleteById(docId);
+        return true;
+    }
+
     /** Splits text into ~800-char pieces with 100-char overlap. */
     static List<String> split(String text) {
         List<String> pieces = new ArrayList<>();
