@@ -10,18 +10,30 @@ An AI agent and RAG platform for small businesses, built with Java Spring Boot, 
 
 ## Quick start
 
-1. Copy the example environment file and add your own Groq key:
+1. Copy the example environment file and fill in your values (Groq key, a random `JWT_SECRET`, and the admin email and password):
 
         cp .env.example .env
 
-2. Start everything:
+2. Start the backend and database:
 
         docker compose up -d
 
-3. Try the agent (the backend listens on port 8081):
+3. Start the frontend and open http://localhost:5173 :
+
+        cd frontend && npm install && npm run dev
+
+4. Sign in with the admin account from your `.env`, or sign up as a normal user (signup always creates a `CUSTOMER`).
+
+5. Or try the API directly. Log in to get a token, then call the agent (backend on port 8081):
+
+        TOKEN=$(curl -s -X POST http://localhost:8081/api/auth/login \
+          -H "Content-Type: application/json" \
+          -d '{"email":"YOUR_ADMIN_EMAIL","password":"YOUR_ADMIN_PASSWORD"}' \
+          | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 
         curl -s -X POST http://localhost:8081/api/omniserve/chat \
           -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $TOKEN" \
           -d '{"message":"How many Paper Cups do we have?"}'
 
 ## Demo data
