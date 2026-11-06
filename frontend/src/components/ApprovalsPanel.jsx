@@ -71,7 +71,22 @@ export default function ApprovalsPanel() {
   };
 
   useEffect(() => {
-    load();
+    const fetchApprovals = async () => {
+      try {
+        const res = await getPendingApprovals();
+        const list = [...res.data].sort(
+          (a, b) =>
+            (a.status === 'PENDING' ? 0 : 1) - (b.status === 'PENDING' ? 0 : 1) || b.id - a.id
+        );
+        setApprovals(list);
+        setError('');
+      } catch (err) {
+        console.error(err);
+        setError('Could not load approvals from the backend.');
+      }
+    };
+
+    fetchApprovals();
   }, []);
 
   const act = async (id, status) => {

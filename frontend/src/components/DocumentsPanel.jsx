@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Upload, Send, ShieldCheck, User, Trash2 } from 'lucide-react';
+import { FileText, Upload, Send, Trash2 } from 'lucide-react';
 import { uploadDocument, askDocument, listDocuments, deleteDocument } from '../services/api';
 
 export default function DocumentsPanel({ isAdmin }) {

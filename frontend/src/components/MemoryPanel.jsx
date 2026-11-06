@@ -1,12 +1,22 @@
+
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { getUserMemories, saveUserMemory, deleteUserMemory, getStoredUser } from '../services/api';
+import {
+  getUserMemories,
+  saveUserMemory,
+  deleteUserMemory,
+  getStoredUser,
+} from '../services/api';
 
 const USER_ID = (getStoredUser() || {}).id || 0;
 
 function formatTime(value) {
   if (!value) return '';
-  const iso = /(Z|[+-]\d\d:?\d\d)$/.test(value) ? value : value + 'Z';
+
+  const iso = /(Z|[+-]\d\d:?\d\d)$/.test(value)
+    ? value
+    : value + 'Z';
+
   return new Date(iso).toLocaleString();
 }
 
@@ -18,7 +28,11 @@ export default function MemoryPanel() {
   const load = async () => {
     try {
       const res = await getUserMemories(USER_ID);
-      setMemories([...res.data].sort((a, b) => b.id - a.id));
+
+      setMemories(
+        [...res.data].sort((a, b) => b.id - a.id)
+      );
+
       setError('');
     } catch (err) {
       console.error(err);
@@ -27,12 +41,29 @@ export default function MemoryPanel() {
   };
 
   useEffect(() => {
-    load();
+    const fetchMemories = async () => {
+      try {
+        const res = await getUserMemories(USER_ID);
+
+        setMemories(
+          [...res.data].sort((a, b) => b.id - a.id)
+        );
+
+        setError('');
+      } catch (err) {
+        console.error(err);
+        setError('Could not load memories from the backend.');
+      }
+    };
+
+    fetchMemories();
   }, []);
 
   const save = async (e) => {
     e.preventDefault();
+
     if (!newMemory.trim()) return;
+
     try {
       await saveUserMemory(USER_ID, newMemory);
       setNewMemory('');
@@ -40,7 +71,8 @@ export default function MemoryPanel() {
       console.error(err);
       setError('Could not save the memory.');
     }
-    load();
+
+    await load();
   };
 
   const remove = async (id) => {
@@ -50,12 +82,14 @@ export default function MemoryPanel() {
       console.error(err);
       setError('Could not delete the memory.');
     }
-    load();
+
+    await load();
   };
 
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-3xl">
+
         <p className="mb-4 text-sm text-slate-500">
           Facts the agent remembers about you. It saves new ones from chat automatically, and uses
           them in every conversation.
@@ -69,6 +103,7 @@ export default function MemoryPanel() {
             placeholder="Add a fact yourself (e.g. Preferred currency is USD)"
             className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
           />
+
           <button
             type="submit"
             className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800"
@@ -84,7 +119,9 @@ export default function MemoryPanel() {
         )}
 
         {memories.length === 0 && !error && (
-          <p className="text-sm text-slate-500">No memories saved yet.</p>
+          <p className="text-sm text-slate-500">
+            No memories saved yet.
+          </p>
         )}
 
         <ul className="flex flex-col gap-2">
@@ -94,11 +131,17 @@ export default function MemoryPanel() {
               className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2"
             >
               <div>
-                <div className="text-sm text-slate-800">{mem.memoryFact}</div>
+                <div className="text-sm text-slate-800">
+                  {mem.memoryFact}
+                </div>
+
                 {mem.updatedAt && (
-                  <div className="text-xs text-slate-400">{formatTime(mem.updatedAt)}</div>
+                  <div className="text-xs text-slate-400">
+                    {formatTime(mem.updatedAt)}
+                  </div>
                 )}
               </div>
+
               <button
                 type="button"
                 onClick={() => remove(mem.id)}
@@ -110,6 +153,7 @@ export default function MemoryPanel() {
             </li>
           ))}
         </ul>
+
       </div>
     </div>
   );
