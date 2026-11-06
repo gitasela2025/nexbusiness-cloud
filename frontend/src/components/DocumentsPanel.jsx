@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { FileText, Upload, Send, ShieldCheck, User, Trash2 } from 'lucide-react';
 import { uploadDocument, askDocument, listDocuments, deleteDocument } from '../services/api';
 
-export default function DocumentsPanel() {
+export default function DocumentsPanel({ isAdmin }) {
   const fileRef = useRef(null);
-  const [role, setRole] = useState('USER');
+  const role = isAdmin ? 'ADMIN' : 'USER';
   const [namespace, setNamespace] = useState('demo');
 
   const [file, setFile] = useState(null);
@@ -86,29 +86,11 @@ export default function DocumentsPanel() {
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-3xl space-y-5">
 
-        {/* Role switcher */}
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-          <div>
-            <div className="text-sm font-semibold">Viewing as</div>
-            <div className="text-xs text-slate-500">
-              ADMIN can see ADMIN_ONLY documents. USER cannot. The filter runs in the SQL query.
-            </div>
-          </div>
-          <div className="flex overflow-hidden rounded-lg border border-slate-200 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setRole('USER')}
-              className={'flex items-center gap-1.5 px-3 py-2 ' + (role === 'USER' ? 'bg-rose-700 text-white' : 'bg-white text-slate-600')}
-            >
-              <User size={14} /> USER
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('ADMIN')}
-              className={'flex items-center gap-1.5 px-3 py-2 ' + (role === 'ADMIN' ? 'bg-rose-700 text-white' : 'bg-white text-slate-600')}
-            >
-              <ShieldCheck size={14} /> ADMIN
-            </button>
+        {/* Role label */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-sm font-semibold">Signed in as {role}</div>
+          <div className="text-xs text-slate-500">
+            ADMIN can see ADMIN_ONLY documents. Other users cannot. The filter runs in the SQL query.
           </div>
         </div>
 

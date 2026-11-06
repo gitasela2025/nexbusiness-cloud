@@ -7,7 +7,8 @@ const NAV = [
   { id: 'documents', label: 'Documents', icon: FileText },
 ];
 
-export default function Sidebar({ activeTab, onChange }) {
+export default function Sidebar({ activeTab, onChange, isAdmin }) {
+  const items = NAV.filter((n) => n.id !== 'approvals' || isAdmin);
   return (
     <aside className="sidebar-bg flex w-16 shrink-0 flex-col md:w-64">
       <button type="button" onClick={() => onChange('chat')} title="Home" className="flex w-full items-center gap-3 px-4 py-5 text-left">
@@ -27,7 +28,7 @@ export default function Sidebar({ activeTab, onChange }) {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-2 md:px-3">
-        {NAV.map(({ id, label, icon: Icon, soon }) => {
+        {items.map(({ id, label, icon: Icon, soon }) => {
           const active = activeTab === id;
           return (
             <button

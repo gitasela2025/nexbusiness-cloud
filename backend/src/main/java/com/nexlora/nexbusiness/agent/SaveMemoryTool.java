@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexlora.nexbusiness.entity.UserMemory;
 import com.nexlora.nexbusiness.repository.UserMemoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.nexlora.nexbusiness.security.CurrentUser;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -11,9 +12,6 @@ import java.util.*;
 
 @Component
 public class SaveMemoryTool implements Tool {
-
-    // Day 15 (JWT) හිදී සැබෑ user id එකෙන් ආදේශ කරමු
-    private static final Long DEFAULT_USER_ID = 1L;
     private static final int MAX_LEN = 300;
 
     @Autowired
@@ -50,19 +48,23 @@ public class SaveMemoryTool implements Tool {
         if (raw == null || raw.toString().isBlank()) {
             return json(Map.of("saved", false, "error", "fact is required"));
         }
+        Long userId = CurrentUser.agentUser();
+        if (userId == null) {
+            return json(Map.of("saved", false, "error", "no signed-in user"));
+        }
         String fact = raw.toString().trim();
         if (fact.length() > MAX_LEN) {
             return json(Map.of("saved", false, "error", "fact is too long, keep it under " + MAX_LEN + " characters"));
         }
 
-        for (UserMemory m : memoryRepository.findByUserIdOrderByUpdatedAtDesc(DEFAULT_USER_ID)) {
+        for (UserMemory m : memoryRepository.findByUserIdOrderByUpdatedAtDesc(userId)) {
             if (m.getMemoryFact() != null && m.getMemoryFact().trim().equalsIgnoreCase(fact)) {
                 return json(Map.of("saved", false, "alreadyKnown", true, "fact", fact));
             }
         }
 
         UserMemory memory = new UserMemory();
-        memory.setUserId(DEFAULT_USER_ID);
+        memory.setUserId(userId);
         memory.setMemoryFact(fact);
         memory.setUpdatedAt(LocalDateTime.now());
         memory = memoryRepository.save(memory);

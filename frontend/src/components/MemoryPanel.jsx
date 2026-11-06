@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { getUserMemories, saveUserMemory, deleteUserMemory } from '../services/api';
+import { getUserMemories, saveUserMemory, deleteUserMemory, getStoredUser } from '../services/api';
 
-const USER_ID = 1; // Day 15 (JWT) හිදී සැබෑ user id එකෙන් ආදේශ කරමු
+const USER_ID = (getStoredUser() || {}).id || 0;
 
 function formatTime(value) {
   if (!value) return '';

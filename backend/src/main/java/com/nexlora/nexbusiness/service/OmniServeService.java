@@ -150,7 +150,7 @@ public class OmniServeService {
 
     // Saved facts about the user, added to every conversation (newest first, max 20)
     private String buildMemoryContext() {
-        List<UserMemory> memories = memoryRepository.findByUserIdOrderByUpdatedAtDesc(1L);
+        List<UserMemory> memories = memoryRepository.findByUserIdOrderByUpdatedAtDesc(com.nexlora.nexbusiness.security.CurrentUser.agentUser());
         if (memories.isEmpty()) {
             return "\nREMEMBERED FACTS: none yet.\n";
         }

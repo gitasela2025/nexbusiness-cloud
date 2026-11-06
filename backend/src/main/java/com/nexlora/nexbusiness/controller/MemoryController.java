@@ -2,9 +2,11 @@ package com.nexlora.nexbusiness.controller;
 
 import com.nexlora.nexbusiness.entity.UserMemory;
 import com.nexlora.nexbusiness.repository.UserMemoryRepository;
+import com.nexlora.nexbusiness.security.CurrentUser;
 import com.nexlora.nexbusiness.service.MemoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,24 +23,22 @@ public class MemoryController {
     @Autowired
     private UserMemoryRepository memoryRepository;
 
+    // The URL userId is ignored: users only ever see their own memories.
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<UserMemory>> getMemories(@PathVariable Long userId) {
-        return ResponseEntity.ok(memoryService.getUserMemories(userId));
+    public ResponseEntity<List<UserMemory>> getMemories(@PathVariable Long userId, Authentication auth) {
+        return ResponseEntity.ok(memoryService.getUserMemories(CurrentUser.id(auth)));
     }
 
     @PostMapping("/save")
-    public ResponseEntity<UserMemory> saveMemory(@RequestBody Map<String, Object> request) {
-        Long userId = Long.valueOf(request.get("userId").toString());
+    public ResponseEntity<UserMemory> saveMemory(@RequestBody Map<String, Object> request, Authentication auth) {
         String fact = (String) request.get("fact");
-
-        UserMemory saved = memoryService.saveMemory(userId, fact);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(memoryService.saveMemory(CurrentUser.id(auth), fact));
     }
 
-    // Memory manager: remove one remembered fact
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteMemory(@PathVariable Long id) {
-        if (!memoryRepository.existsById(id)) {
+    public ResponseEntity<String> deleteMemory(@PathVariable Long id, Authentication auth) {
+        UserMemory m = memoryRepository.findById(id).orElse(null);
+        if (m == null || !m.getUserId().equals(CurrentUser.id(auth))) {
             return ResponseEntity.status(404).body("Memory not found");
         }
         memoryRepository.deleteById(id);
