@@ -88,7 +88,7 @@ export default function DocumentsPanel({ isAdmin }) {
 
         {/* Role label */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-sm font-semibold">Signed in as {role}</div>
+          <div className="text-sm font-semibold">Signed in as {isAdmin ? "ADMIN" : "CUSTOMER"}</div>
           <div className="text-xs text-slate-500">
             ADMIN can see ADMIN_ONLY documents. Other users cannot. The filter runs in the SQL query.
           </div>
@@ -145,7 +145,7 @@ export default function DocumentsPanel({ isAdmin }) {
 
         ) : (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-500">
-            Uploading documents is limited to ADMIN. Switch to ADMIN above to upload.
+            Uploading documents is limited to ADMIN. Sign in as an admin to upload.
           </div>
         )}
 
