@@ -10,9 +10,9 @@ const apiClient = axios.create({
 });
 
 // SecureDoc RAG API
-export const uploadDocument = (formData) => {
+export const uploadDocument = (formData, role) => {
     return apiClient.post('/securedoc/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data', 'X-Demo-Role': role },
     });
 };
 

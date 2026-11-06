@@ -40,3 +40,17 @@ Secrets live in `.env`, which is never committed. See `.env.example` for the var
 ![Approval queue](docs/screenshots/approvals.png)
 ![MemoryCore](docs/screenshots/memory.png)
 
+
+### SecureDoc: same question, different answers by role
+
+USER cannot see ADMIN_ONLY documents:
+
+![USER view](docs/screenshots/docs-user.png)
+
+ADMIN gets the answer with a page-level citation:
+
+![ADMIN view](docs/screenshots/docs-admin.png)
+
+Document list with delete (ADMIN only):
+
+![Document list](docs/screenshots/docs-list.png)

@@ -53,14 +53,14 @@ export default function DocumentsPanel() {
       fd.append('file', file);
       fd.append('namespace', namespace);
       fd.append('accessRole', accessRole);
-      const res = await uploadDocument(fd);
+      const res = await uploadDocument(fd, role);
       setUploadMsg(res.data);
       loadDocs();
       setFile(null);
       if (fileRef.current) fileRef.current.value = '';
     } catch (e) {
       console.error(e);
-      setUploadMsg('Upload failed. Is the backend running?');
+      setUploadMsg(e.response && e.response.status === 403 ? 'Only ADMIN can upload documents.' : 'Upload failed. Is the backend running?');
     } finally {
       setUploading(false);
     }
@@ -112,7 +112,7 @@ export default function DocumentsPanel() {
           </div>
         </div>
 
-        {/* Upload */}
+        {role === 'ADMIN' ? (
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Upload size={16} /> Upload a PDF
@@ -160,6 +160,12 @@ export default function DocumentsPanel() {
           </div>
           {uploadMsg && <div className="mt-3 text-xs text-slate-600">{uploadMsg}</div>}
         </div>
+
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-500">
+            Uploading documents is limited to ADMIN. Switch to ADMIN above to upload.
+          </div>
+        )}
 
         {/* Documents list */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
