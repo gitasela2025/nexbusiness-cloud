@@ -54,3 +54,34 @@ ADMIN gets the answer with a page-level citation:
 Document list with delete (ADMIN only):
 
 ![Document list](docs/screenshots/docs-list.png)
+
+## Authentication and roles
+
+- Sign up and login with email and password (BCrypt-hashed). The API returns a JWT that the frontend sends on every request.
+- Roles: `CUSTOMER` (default for every signup) and `ADMIN`. Signup can never create an admin.
+- The first admin is created from environment variables on startup.
+- Endpoint rules, enforced in Spring Security:
+  - Approvals, document upload and document delete: `ADMIN` only
+  - Chat, memory, document list and ask: any signed-in user
+  - Everything else: denied
+- Memory and the agent are scoped to the signed-in user (taken from the token, never from the URL).
+- `ADMIN_ONLY` documents are filtered in the SQL query, so the model never sees text the user may not read.
+
+### Environment variables
+
+Copy `.env.example` to `.env` and set:
+
+| Variable | Purpose |
+|---|---|
+| `GROQ_API_KEY` | Groq API key |
+| `GROQ_MODEL` | Optional model override |
+| `JWT_SECRET` | Random string, 32+ characters |
+| `ADMIN_EMAIL` | Email of the seeded admin account |
+| `ADMIN_PASSWORD` | Password for the seeded admin (8+ characters) |
+
+## Known limitations
+
+- Document search uses MySQL full-text search (keyword based). Vector embeddings are the planned upgrade.
+- PDFs only, no OCR for scanned documents.
+- JWT is stored in `localStorage`; a production deployment should use HTTPS and consider httpOnly cookies.
+- Not deployed yet; runs locally with `docker compose up`.
