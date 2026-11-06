@@ -6,7 +6,7 @@ An AI agent and RAG platform for small businesses, built with Java Spring Boot, 
 
 1. **SecureDoc RAG Engine:** project-based document namespaces, role-based access (PUBLIC vs ADMIN_ONLY), and page-level citations.
 2. **OmniServe Action Agent:** tool-calling agent for POS, CRM and ERP tasks (for example stock checks), with a manager approval queue for sensitive actions.
-3. **MemoryCore Portal:** long-term user fact extraction and switchable LLM models.
+3. **MemoryCore Portal:** long-term, per-user fact extraction and recall (users can view, add and delete facts).
 
 ## Quick start
 
