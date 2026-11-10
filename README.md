@@ -97,3 +97,14 @@ Copy `.env.example` to `.env` and set:
 - PDFs only, no OCR for scanned documents.
 - JWT is stored in `localStorage`; a production deployment should use HTTPS and consider httpOnly cookies.
 - Not deployed yet; runs locally with `docker compose up`.
+
+## ✅ Manually tested (Nov 2026)
+
+| Scenario | Result |
+|---|---|
+| AI creates purchase order, Admin approves | Stock 3 → 43 |
+| AI places order | Stock 43 → 42 |
+| Refund request rejected | Order and stock unchanged |
+| Refund request approved | Order REFUNDED, stock 42 → 43 |
+| Customer role | Approvals hidden in UI, API returns 403 |
+| Agent memory | Preferences recalled after logout and login |
