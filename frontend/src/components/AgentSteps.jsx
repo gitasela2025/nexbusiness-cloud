@@ -37,7 +37,7 @@ const TONE = {
   ok: { icon: CheckCircle2, text: 'text-emerald-700', dot: 'text-emerald-600' },
   pending: { icon: Clock, text: 'text-amber-700', dot: 'text-amber-600' },
   warn: { icon: AlertTriangle, text: 'text-amber-700', dot: 'text-amber-600' },
-  error: { icon: XCircle, text: 'text-rose-700', dot: 'text-rose-600' },
+  error: { icon: XCircle, text: 'text-blue-600', dot: 'text-rose-600' },
 };
 
 export default function AgentSteps({ steps }) {
@@ -52,7 +52,7 @@ export default function AgentSteps({ steps }) {
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-slate-700"
       >
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <Wrench size={14} className="text-rose-700" />
+        <Wrench size={14} className="text-blue-600" />
         Agent steps ({steps.length})
       </button>
 
@@ -79,7 +79,7 @@ export default function AgentSteps({ steps }) {
                   {s.result && typeof s.result === 'object' && (s.result.requested || s.result.alreadyPending) && (
                     <a
                       href="#/approvals"
-                      className="mt-1 inline-block rounded bg-rose-700 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-rose-800"
+                      className="mt-1 inline-block rounded bg-blue-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-blue-700"
                     >
                       Review in Approvals →
                     </a>

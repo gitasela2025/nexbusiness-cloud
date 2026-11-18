@@ -8,7 +8,7 @@ body {
 
 body {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  background: #fbf7f1;
+  background: #0b1030;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
 }
@@ -17,21 +17,51 @@ body {
   height: 100%;
 }
 
-/* Sidebar: deep navy -> crimson */
+/* Sidebar: deep navy */
 .sidebar-bg {
-  background: linear-gradient(180deg, #1b2140 0%, #5e1b3b 50%, #8f1c36 100%);
+  background: linear-gradient(180deg, #0a0f2e 0%, #0d1440 55%, #111a52 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Logo badge and active menu item: crimson -> gold */
+/* Logo badge and active menu item: blue -> violet */
 .brand-badge {
-  background: linear-gradient(135deg, #c0283f 0%, #e0a21c 100%);
-  box-shadow: 0 4px 12px rgba(192, 40, 63, 0.35);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  box-shadow: 0 4px 14px rgba(59, 91, 246, 0.45);
 }
 
 .nav-active {
-  background: linear-gradient(90deg, #c0283f 0%, #d9951f 100%);
-  box-shadow: 0 4px 12px rgba(192, 40, 63, 0.35);
+  background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
 }
+
+/* Main area: dark indigo glow at the top fading to soft lavender */
+.main-bg {
+  background:
+    radial-gradient(900px 380px at 88% -8%, rgba(168, 85, 247, 0.55), transparent 62%),
+    radial-gradient(700px 320px at 8% 0%, rgba(37, 99, 235, 0.35), transparent 60%),
+    linear-gradient(180deg, #232a74 0%, #3d43a8 38%, #c7c9ee 100%);
+}
+
+.banner-bg {
+  background: linear-gradient(100deg, #1b2689 0%, #3730b8 55%, #5b3fd6 100%);
+  border: 1px solid rgba(147, 197, 253, 0.45);
+  box-shadow: 0 0 32px rgba(99, 102, 241, 0.4), inset 0 0 40px rgba(59, 130, 246, 0.15);
+}
+
+.card-dark {
+  background: linear-gradient(160deg, #151b49 0%, #0d1236 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(5, 8, 30, 0.45);
+  color: #fff;
+}
+
+.stat-blue { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #1e40af 100%); }
+.stat-green { background: linear-gradient(135deg, #15803d 0%, #22a05a 55%, #166534 100%); }
+.stat-purple { background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 55%, #4c1d95 100%); }
+.stat-orange { background: linear-gradient(135deg, #c2410c 0%, #ea8a1a 55%, #b45309 100%); }
+
+/* Slim scrollbars that fit the dark theme */
+* { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, 0.5) transparent; }
 
 /* Markdown rendered inside chat bubbles */
 .md > :first-child { margin-top: 0; }
@@ -42,5 +72,5 @@ body {
 .md strong { font-weight: 600; }
 .md table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.875rem; width: 100%; }
 .md th, .md td { border: 1px solid #e2e8f0; padding: 0.25rem 0.5rem; text-align: left; }
-.md th { background: #fdf3e3; }
+.md th { background: #eef2ff; }
 .md code { background: #f1f5f9; border-radius: 4px; padding: 0 4px; font-size: 0.85em; }

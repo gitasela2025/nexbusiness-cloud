@@ -110,7 +110,7 @@ export default function DocumentsPanel({ isAdmin }) {
             <button
               type="button"
               onClick={() => fileRef.current && fileRef.current.click()}
-              className="flex items-center gap-1.5 rounded-lg border border-rose-700 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+              className="flex items-center gap-1.5 rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
             >
               <Upload size={14} /> Choose PDF
             </button>
@@ -135,7 +135,7 @@ export default function DocumentsPanel({ isAdmin }) {
               type="button"
               onClick={handleUpload}
               disabled={!file || uploading}
-              className="rounded-lg bg-rose-700 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+              className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
             >
               {uploading ? 'Uploading...' : 'Upload'}
             </button>
@@ -202,7 +202,7 @@ export default function DocumentsPanel({ isAdmin }) {
               type="button"
               onClick={handleAsk}
               disabled={asking || !question.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
               <Send size={14} /> {asking ? 'Asking...' : 'Ask'}
             </button>
@@ -221,7 +221,7 @@ export default function DocumentsPanel({ isAdmin }) {
                   <div className="flex flex-wrap gap-2">
                     {result.sources.map((s, i) => (
                       <details key={i} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs">
-                        <summary className="cursor-pointer font-medium text-rose-700">
+                        <summary className="cursor-pointer font-medium text-blue-600">
                           [{i + 1}] {s.fileName}, p. {s.page}
                         </summary>
                         <div className="mt-2 max-w-xl text-slate-600">{s.text}</div>

@@ -184,7 +184,7 @@ export default function ApprovalsPanel() {
                       <button
                         type="button"
                         onClick={() => act(item.id, 'REJECTED')}
-                        className="flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
+                        className="flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
                       >
                         <X size={14} /> Reject
                       </button>

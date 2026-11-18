@@ -14,7 +14,7 @@ function Message({ message }) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end gap-2">
-        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-rose-700 px-4 py-2 text-sm text-white">
+        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-blue-600 px-4 py-2 text-sm text-white">
           {message.text}
         </div>
         <User size={20} className="mt-1 shrink-0 text-slate-400" />
@@ -30,7 +30,7 @@ function Message({ message }) {
   }
   return (
     <div className="flex gap-2">
-      <Bot size={20} className="mt-1 shrink-0 text-rose-700" />
+      <Bot size={20} className="mt-1 shrink-0 text-blue-600" />
       <div className="min-w-0 max-w-[85%]">
         <AgentSteps steps={message.steps} />
         <div className="md overflow-x-auto rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-2 text-sm">
@@ -63,7 +63,7 @@ export default function ChatPanel({ messages, loading, onSend }) {
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           {messages.length === 0 && (
             <div className="mt-10 text-center">
-              <Bot size={40} className="mx-auto text-rose-700" />
+              <Bot size={40} className="mx-auto text-blue-600" />
               <h2 className="mt-3 text-lg font-semibold">How can OmniServe help?</h2>
               <p className="mt-1 text-sm text-slate-500">
                 Check stock, place orders, book appointments, or request approvals.
@@ -74,7 +74,7 @@ export default function ChatPanel({ messages, loading, onSend }) {
                     key={s}
                     type="button"
                     onClick={() => onSend(s)}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:border-rose-300 hover:text-rose-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:border-blue-300 hover:text-blue-600"
                   >
                     {s}
                   </button>
@@ -99,12 +99,12 @@ export default function ChatPanel({ messages, loading, onSend }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about stock, orders, bookings..."
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="flex items-center gap-1 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send size={16} />
             <span className="hidden sm:inline">Send</span>

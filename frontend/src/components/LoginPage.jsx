@@ -15,7 +15,7 @@ function Field({ icon: Icon, right, ...props }) {
       <Icon size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
       <input
         {...props}
-        className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-11 text-base outline-none transition focus:border-rose-500 focus:ring-4 focus:ring-rose-100"
+        className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-11 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
       />
       {right}
     </div>
@@ -56,7 +56,7 @@ export default function LoginPage({ onAuthed }) {
       {/* Brand panel */}
       <div className="sidebar-bg relative hidden w-1/2 flex-col justify-between overflow-hidden p-12 text-white lg:flex">
         <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-rose-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl" />
 
         <div className="relative flex items-center gap-3">
           <div className="brand-badge flex h-12 w-12 items-center justify-center rounded-2xl">
@@ -64,14 +64,14 @@ export default function LoginPage({ onAuthed }) {
           </div>
           <div>
             <div className="text-xl font-semibold leading-tight">NexBusiness</div>
-            <div className="text-[11px] font-medium uppercase tracking-widest text-amber-300">AI Agent Suite</div>
+            <div className="text-[11px] font-medium uppercase tracking-widest text-sky-300">AI Agent Suite</div>
           </div>
         </div>
 
         <div className="relative">
           <h1 className="text-4xl font-bold leading-tight">
             An AI assistant that acts,<br />
-            <span className="text-amber-300">with a human in control.</span>
+            <span className="text-sky-300">with a human in control.</span>
           </h1>
           <p className="mt-4 max-w-md text-white/70">
             Run stock, bookings and document questions from one place, with role-based access built in.
@@ -80,7 +80,7 @@ export default function LoginPage({ onAuthed }) {
           <div className="mt-10 grid max-w-xl grid-cols-1 gap-5 sm:grid-cols-2">
             {FEATURES.map(({ icon: Icon, title, text }) => (
               <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                <Icon size={22} className="mb-2 text-amber-300" />
+                <Icon size={22} className="mb-2 text-sky-300" />
                 <div className="text-sm font-semibold">{title}</div>
                 <div className="mt-1 text-xs leading-relaxed text-white/65">{text}</div>
               </div>
@@ -141,7 +141,7 @@ export default function LoginPage({ onAuthed }) {
             )}
 
             <button type="submit" disabled={busy}
-              className="w-full rounded-xl bg-gradient-to-r from-rose-700 to-rose-600 px-4 py-3 text-base font-semibold text-white shadow-md shadow-rose-300/50 transition hover:from-rose-800 hover:to-rose-700 disabled:opacity-60">
+              className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-md shadow-blue-300/50 transition hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60">
               {busy ? 'Please wait...' : isLogin ? 'Sign in' : 'Create account'}
             </button>
           </div>
@@ -150,7 +150,7 @@ export default function LoginPage({ onAuthed }) {
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button type="button"
               onClick={() => { setMode(isLogin ? 'signup' : 'login'); setError(''); }}
-              className="font-semibold text-rose-700 hover:underline">
+              className="font-semibold text-blue-600 hover:underline">
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </div>

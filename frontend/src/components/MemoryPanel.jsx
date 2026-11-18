@@ -101,12 +101,12 @@ export default function MemoryPanel() {
             value={newMemory}
             onChange={(e) => setNewMemory(e.target.value)}
             placeholder="Add a fact yourself (e.g. Preferred currency is USD)"
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
 
           <button
             type="submit"
-            className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Save fact
           </button>
