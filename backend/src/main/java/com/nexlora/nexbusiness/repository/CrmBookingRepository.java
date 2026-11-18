@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CrmBookingRepository extends JpaRepository<CrmBookingTicket, Long> {
+
+    long countByType(CrmBookingTicket.BookingType type);
+
+    long countByTypeAndUserId(CrmBookingTicket.BookingType type, Long userId);
 }

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Wrench,
-  FileText,
+  ShoppingCart,
   Brain,
   CheckCircle2,
   Sparkles,
@@ -15,7 +14,7 @@ import {
   FolderOpen,
   TrendingUp,
 } from 'lucide-react';
-import { getUserMemories, listDocuments } from '../services/api';
+import { getUserMemories, getStats } from '../services/api';
 
 const RANGES = [
   { id: '7D', days: 7 },
@@ -167,24 +166,22 @@ function Skyline() {
 export default function Dashboard({ user, isAdmin, approvals, messages, onAsk, goTo }) {
   const [range, setRange] = useState('30D');
   const [memories, setMemories] = useState(null);
-  const [docs, setDocs] = useState(null);
+  const [stats, setStats] = useState(null);
   const [question, setQuestion] = useState('');
 
-  const role = isAdmin ? 'ADMIN' : 'USER';
   const firstName = String(user.name || 'there').trim().split(/\s+/)[0];
 
   useEffect(() => {
     let alive = true;
-    Promise.allSettled([getUserMemories(user.id), listDocuments('demo', role)]).then(([mem, doc]) => {
+    Promise.allSettled([getUserMemories(user.id), getStats()]).then(([mem, st]) => {
       if (!alive) return;
       setMemories(mem.status === 'fulfilled' && Array.isArray(mem.value.data) ? mem.value.data : null);
-      setDocs(doc.status === 'fulfilled' && Array.isArray(doc.value.data) ? doc.value.data : null);
+      setStats(st.status === 'fulfilled' && st.value.data ? st.value.data : null);
     });
     return () => { alive = false; };
-  }, [user.id, role]);
+  }, [user.id]);
 
   const pending = approvals.filter((a) => a.status === 'PENDING').length;
-  const stepCount = messages.reduce((n, m) => n + (m.steps ? m.steps.length : 0), 0);
 
   // Real events: approval requests + saved memories
   const events = useMemo(() => {
@@ -257,9 +254,9 @@ export default function Dashboard({ user, isAdmin, approvals, messages, onAsk, g
 
         {/* Stat cards (live numbers) */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard tone="stat-blue" icon={Wrench} label="Agent Steps (this session)" value={stepCount} />
-          <StatCard tone="stat-green" icon={FileText} label="Documents" value={docs ? docs.length : '—'} />
-          <StatCard tone="stat-purple" icon={Brain} label="Saved Memories" value={memories ? memories.length : '—'} />
+          <StatCard tone="stat-blue" icon={ShoppingCart} label={isAdmin ? 'Total Orders' : 'My Orders'} value={stats ? stats.totalOrders : '—'} />
+          <StatCard tone="stat-green" icon={Package} label="Units in Stock" value={stats ? stats.stockUnits : '—'} />
+          <StatCard tone="stat-purple" icon={CalendarDays} label={isAdmin ? 'Appointments' : 'My Appointments'} value={stats ? stats.appointments : '—'} />
           <StatCard tone="stat-orange" icon={CheckCircle2} label="Pending Approvals" value={isAdmin ? pending : '—'} />
         </section>
 

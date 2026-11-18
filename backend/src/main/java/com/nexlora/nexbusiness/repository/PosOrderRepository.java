@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PosOrderRepository extends JpaRepository<PosOrder, Long> {
+
+    long countByUserId(Long userId);
 }

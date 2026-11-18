@@ -99,3 +99,8 @@ export const saveUserMemory = (userId, fact) => {
 export const deleteUserMemory = (id) => {
     return apiClient.delete(`/memories/${id}`);
 };
+
+// Dashboard stats
+export const getStats = () => {
+    return apiClient.get('/omniserve/stats');
+};

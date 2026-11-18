@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PendingApprovalRepository extends JpaRepository<PendingApproval, Long> {
+
+    long countByStatus(PendingApproval.ApprovalStatus status);
 }
