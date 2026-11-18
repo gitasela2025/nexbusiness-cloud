@@ -53,26 +53,23 @@ export const login = (email, password) =>
 // SecureDoc RAG API
 export const uploadDocument = (formData, role) => {
     return apiClient.post('/securedoc/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data', 'X-Demo-Role': role },
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 };
 
 export const askDocument = (namespace, question, role) => {
     return apiClient.post('/securedoc/ask', { namespace, question }, {
-        headers: { 'X-Demo-Role': role },
     });
 };
 
 export const listDocuments = (namespace, role) => {
     return apiClient.get('/securedoc/documents', {
         params: { namespace },
-        headers: { 'X-Demo-Role': role },
     });
 };
 
 export const deleteDocument = (docId, role) => {
     return apiClient.delete(`/securedoc/documents/${docId}`, {
-        headers: { 'X-Demo-Role': role },
     });
 };
 
