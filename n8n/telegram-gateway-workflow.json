@@ -1,0 +1,250 @@
+{
+  "name": "NexBusiness Omnichannel Gateway (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger-1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_CREDENTIAL_ID",
+          "name": "NexBusiness Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://nexbusiness-backend:8080/api/agent/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.AGENT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'telegram', externalId: String($json.message.from.id), name: [$json.message.from.first_name, $json.message.from.last_name].filter(Boolean).join(' ') || $json.message.from.username || 'Telegram User', message: $json.message.text || '' }) }}",
+        "options": {
+          "timeout": 30000,
+          "batching": {
+            "batch": {}
+          }
+        }
+      },
+      "id": "http-agent-chat-1",
+      "name": "Call Spring Boot Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "boolean"
+          },
+          "conditions": [
+            {
+              "id": "cond-needs-human",
+              "leftValue": "={{ $json.needs_human }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-needs-human-1",
+      "name": "IF Needs Human",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Logs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "channel": "telegram",
+            "user_id": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+            "user_name": "={{ $('Telegram Trigger').item.json.message.from.first_name || '' }}",
+            "question": "={{ $('Telegram Trigger').item.json.message.text }}",
+            "reply": "={{ $json.reply }}",
+            "needs_human": "={{ $json.needs_human }}",
+            "handoff_reason": "={{ $json.handoff_reason || '' }}",
+            "ticket_id": "={{ $json.handoff_ticket_id || '' }}",
+            "tools_used": "={{ ($json.tools_used || []).join(', ') }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-log-1",
+      "name": "Google Sheets Audit Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        980,
+        180
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@nexlora.local",
+        "toEmail": "admin@nexbusiness.local",
+        "subject": "=Handoff Alert (#{{ $json.handoff_ticket_id }}) - Telegram User {{ $('Telegram Trigger').item.json.message.from.id }}",
+        "emailFormat": "text",
+        "text": "=Human handoff triggered.\n\nTicket ID: {{ $json.handoff_ticket_id }}\nReason: {{ $json.handoff_reason }}\nTelegram User ID: {{ $('Telegram Trigger').item.json.message.from.id }}\nMessage: {{ $('Telegram Trigger').item.json.message.text }}\nBot Reply: {{ $json.reply }}",
+        "options": {}
+      },
+      "id": "smtp-alert-1",
+      "name": "SMTP Handoff Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        980,
+        360
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Call Spring Boot Agent').item.json.reply }}",
+        "additionalFields": {}
+      },
+      "id": "telegram-reply-1",
+      "name": "Send Telegram Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1240,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_CREDENTIAL_ID",
+          "name": "NexBusiness Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Spring Boot Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Spring Boot Agent": {
+      "main": [
+        [
+          {
+            "node": "IF Needs Human",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Needs Human": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Audit Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SMTP Handoff Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets Audit Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

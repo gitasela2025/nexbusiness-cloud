@@ -1,5 +1,6 @@
 package com.nexlora.nexbusiness.config;
 
+import com.nexlora.nexbusiness.security.ApiKeyFilter;
 import com.nexlora.nexbusiness.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter,
+                                           ApiKeyFilter apiKeyFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .cors(c -> {})
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -33,12 +35,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(a -> a
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                // Omnichannel gateway (n8n / Telegram): X-API-Key only, no JWT
+                .requestMatchers("/api/agent/**").hasRole("GATEWAY")
                 .requestMatchers("/api/approvals/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/securedoc/upload").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/securedoc/documents/**").hasRole("ADMIN")
                 .requestMatchers("/api/securedoc/**", "/api/omniserve/**", "/api/memories/**").authenticated()
                 .anyRequest().denyAll())
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

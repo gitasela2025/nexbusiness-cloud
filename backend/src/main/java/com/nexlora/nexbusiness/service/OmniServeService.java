@@ -11,10 +11,7 @@ import com.nexlora.nexbusiness.repository.UserMemoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
@@ -24,17 +21,10 @@ public class OmniServeService {
     private static final Logger log = LoggerFactory.getLogger(OmniServeService.class);
     private static final int MAX_ITERATIONS = 5;
 
-    @Value("${groq.api.key}")
-    private String groqApiKey;
-
-    @Value("${groq.api.url}")
-    private String groqApiUrl;
-
-    @Value("${groq.model}")
-    private String model;
-
-    private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @Autowired
+    private FailoverLlmService failoverLlmService;
 
     @Autowired
     private ToolRegistry toolRegistry;
@@ -42,19 +32,14 @@ public class OmniServeService {
     @Autowired
     private UserMemoryRepository memoryRepository;
 
-    // Old entry point: reply text only
     public String askAgent(String userMessage) {
         return askAgentWithSteps(userMessage).reply();
     }
 
-    // New entry point: reply text + the tool calls the agent made
+    @SuppressWarnings("unchecked")
     public AgentResult askAgentWithSteps(String userMessage) {
         List<AgentStep> steps = new ArrayList<>();
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(groqApiKey);
-
             List<Map<String, Object>> messages = new ArrayList<>();
             messages.add(Map.of("role", "system", "content",
                 "You are OmniServe, an AI business agent for NexBusiness Cloud (POS, CRM, inventory). "
@@ -66,11 +51,11 @@ public class OmniServeService {
                 + "If stock is not enough for an order, tell the user and offer to raise a purchase order with requestPurchaseOrder. "
                 + "Before raising a purchase order, call checkStock to confirm stock is really low (at or below the reorder level). "
                 + "If stock is healthy, tell the user and do not raise the request. "
-                + "For questions about appointments or tickets, call listBookings. "
+                + "For questions about appointments or tickets, call listBookings. Only pass a non-null string for type (e.g. \"appointment\" or \"ticket\"), or omit type completely if listing all—never pass null. "
                 + "Refunds and purchase orders are never executed directly: use requestRefundApproval or requestPurchaseOrder, "
                 + "then tell the user the request is waiting for Admin approval. Never say a refund or purchase order is done. "
                 + "A refund needs an order id and a reason, ask the user if either is missing. "
-                + "When the user states a lasting fact about themselves or their preferences (for example their branch, role or preferred currency), call saveMemory once to remember it. "
+                + "When the user states lasting facts or preferences in a message, combine them into a SINGLE saveMemory call (never emit multiple saveMemory calls in the same turn). "
                 + "Do not save questions, one-off requests, passwords, API keys or card numbers. "
                 + "Use the remembered facts below to personalise answers, and do not ask again for something already remembered. "
                 + "The current date and time is " + java.time.LocalDateTime.now() + ".\n"
@@ -80,41 +65,35 @@ public class OmniServeService {
 
             for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
                 Map<String, Object> body = new HashMap<>();
-                body.put("model", model);
                 body.put("messages", messages);
                 body.put("tools", toolRegistry.definitions());
                 body.put("tool_choice", "auto");
                 body.put("temperature", 0.2);
 
-                ResponseEntity<Map> response = restTemplate.postForEntity(
-                    groqApiUrl, new HttpEntity<>(body, headers), Map.class);
-
-                if (response.getBody() == null) {
-                    return new AgentResult("Error: Received empty response from Groq AI.", steps);
+                Map<String, Object> responseBody = failoverLlmService.callChatCompletions(body);
+                if (responseBody == null) {
+                    return new AgentResult("Error: Received empty response from LLM.", steps);
                 }
                 List<Map<String, Object>> choices =
-                    (List<Map<String, Object>>) response.getBody().get("choices");
+                    (List<Map<String, Object>>) responseBody.get("choices");
                 if (choices == null || choices.isEmpty()) {
-                    return new AgentResult("Error: Received empty response from Groq AI.", steps);
+                    return new AgentResult("Error: Received empty response from LLM.", steps);
                 }
 
                 Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
                 List<Map<String, Object>> toolCalls = (List<Map<String, Object>>) msg.get("tool_calls");
 
-                // AI එකට තවත් tool ඕනේ නැත්නම් මෙය අවසන් පිළිතුරයි
                 if (toolCalls == null || toolCalls.isEmpty()) {
                     Object content = msg.get("content");
                     return new AgentResult(content == null ? "" : content.toString(), steps);
                 }
 
-                // AI එකේ tool_calls message එක history එකට දමන්න
                 Map<String, Object> assistantMsg = new HashMap<>();
                 assistantMsg.put("role", "assistant");
                 assistantMsg.put("content", msg.get("content"));
                 assistantMsg.put("tool_calls", toolCalls);
                 messages.add(assistantMsg);
 
-                // සෑම tool call එකක්ම Java වලින් run කර ප්‍රතිඵලය AI ට දෙන්න
                 for (Map<String, Object> call : toolCalls) {
                     Map<String, Object> fn = (Map<String, Object>) call.get("function");
                     String toolName = (String) fn.get("name");
@@ -123,7 +102,6 @@ public class OmniServeService {
                     String result = runTool(toolName, argsJson);
                     log.info("[AGENT] step {}: {}({}) -> {}", steps.size() + 1, toolName, argsJson, result);
 
-                    // UI timeline එක සඳහා සටහන් කරන්න
                     steps.add(new AgentStep(
                         steps.size() + 1,
                         toolName,
@@ -144,11 +122,10 @@ public class OmniServeService {
 
         } catch (Exception e) {
             log.error("Agent failed", e);
-            return new AgentResult("Failed to communicate with Groq API: " + e.getMessage(), steps);
+            return new AgentResult("Failed to communicate with LLM provider: " + e.getMessage(), steps);
         }
     }
 
-    // Saved facts about the user, added to every conversation (newest first, max 20)
     private String buildMemoryContext() {
         List<UserMemory> memories = memoryRepository.findByUserIdOrderByUpdatedAtDesc(com.nexlora.nexbusiness.security.CurrentUser.agentUser());
         if (memories.isEmpty()) {
@@ -167,30 +144,34 @@ public class OmniServeService {
         try {
             Map<String, Object> args = (argsJson == null || argsJson.isBlank())
                 ? new HashMap<>()
-                : mapper.readValue(argsJson, new TypeReference<Map<String, Object>>() {});
+                : new HashMap<>(mapper.readValue(argsJson, new TypeReference<Map<String, Object>>() {}));
+            args.entrySet().removeIf(e -> e.getValue() == null);
             return tool.get().execute(args);
         } catch (Exception e) {
-            return errorJson("Tool failed: " + e.getMessage());
+            log.error("Tool {} failed", toolName, e);
+            return errorJson("Tool error: " + e.getMessage());
         }
     }
 
     private Map<String, Object> parseArgs(String argsJson) {
         if (argsJson == null || argsJson.isBlank()) {
-            return new HashMap<>();
+            return Collections.emptyMap();
         }
         try {
             return mapper.readValue(argsJson, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
-            return new HashMap<>();
+            return Map.of("raw", argsJson);
         }
     }
 
-    // Tool result (JSON text) -> object, so the UI gets real JSON instead of an escaped string
-    private Object parseResult(String result) {
+    private Object parseResult(String resultJson) {
+        if (resultJson == null || resultJson.isBlank()) {
+            return "";
+        }
         try {
-            return mapper.readValue(result, Object.class);
+            return mapper.readValue(resultJson, Object.class);
         } catch (Exception e) {
-            return result;
+            return resultJson;
         }
     }
 
@@ -198,7 +179,7 @@ public class OmniServeService {
         try {
             return mapper.writeValueAsString(Map.of("error", message));
         } catch (Exception e) {
-            return "{\"error\":\"unknown\"}";
+            return "{\"error\":\"" + message + "\"}";
         }
     }
 }
