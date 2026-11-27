@@ -116,7 +116,11 @@ public class AgentGatewayService {
             return "human_requested";
         }
         for (AgentStep s : steps) {
-            if (s.result() instanceof Map<?, ?> m && m.containsKey("error")) {
+            // Only real failures (an exception inside a tool) need a human.
+            // Normal validation errors such as "order not found" stay in the conversation.
+            if (s.result() instanceof Map<?, ?> m
+                    && m.get("error") instanceof String err
+                    && err.startsWith("Tool error")) {
                 return "tool_error";
             }
         }

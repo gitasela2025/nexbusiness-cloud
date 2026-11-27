@@ -130,7 +130,7 @@ class AgentGatewayServiceTest {
 
     @Test
     void toolErrorTriggersHandoff() {
-        AgentStep bad = new AgentStep(1, "checkStock", Map.of(), Map.of("error", "db down"), false);
+        AgentStep bad = new AgentStep(1, "checkStock", Map.of(), Map.of("error", "Tool error: db down"), false);
         when(omni.askAgentWithSteps(anyString())).thenReturn(answer("Something went wrong.", bad));
 
         GatewayResult r = service.handle("telegram", "1", "A", "stock?");
@@ -138,6 +138,19 @@ class AgentGatewayServiceTest {
         assertTrue(r.needsHuman());
         assertEquals("tool_error", r.handoffReason());
         assertEquals(List.of("checkStock"), r.toolsUsed());
+    }
+
+    @Test
+    void validationErrorDoesNotTriggerHandoff() {
+        AgentStep notFound = new AgentStep(1, "requestRefundApproval", Map.of(),
+                Map.of("requested", false, "error", "Order 3 not found"), false);
+        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("I couldn't find that order.", notFound));
+
+        GatewayResult r = service.handle("telegram", "1", "A", "refund order 3");
+
+        assertFalse(r.needsHuman());
+        assertNull(r.handoffTicketId());
+        verify(tickets, never()).save(any());
     }
 
     @Test
