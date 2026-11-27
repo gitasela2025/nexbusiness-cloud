@@ -38,6 +38,11 @@ public class OmniServeService {
 
     @SuppressWarnings("unchecked")
     public AgentResult askAgentWithSteps(String userMessage) {
+        return askAgentWithSteps(userMessage, List.of());
+    }
+
+    /** history: earlier turns as {role, content} maps, oldest first. */
+    public AgentResult askAgentWithSteps(String userMessage, List<Map<String, String>> history) {
         List<AgentStep> steps = new ArrayList<>();
         try {
             List<Map<String, Object>> messages = new ArrayList<>();
@@ -61,6 +66,9 @@ public class OmniServeService {
                 + "The current date and time is " + java.time.LocalDateTime.now() + ".\n"
                 + buildMemoryContext()
                 ));
+            for (Map<String, String> h : history) {
+                messages.add(Map.of("role", h.get("role"), "content", h.get("content")));
+            }
             messages.add(Map.of("role", "user", "content", userMessage));
 
             for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {

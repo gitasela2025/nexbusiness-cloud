@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +42,9 @@ public class AgentGatewayService {
             "Sorry, I can't answer that right now. A team member will follow up with you.";
     static final String HANDOFF_NOTICE =
             "\n\nI've flagged this conversation for a human team member.";
+
+    /** Only recent exchanges count as the same conversation. */
+    private static final long HISTORY_WINDOW_MINUTES = 30;
 
     private static final Pattern HUMAN_REQUEST = Pattern.compile(
             "\\b(human|real person|representative|manager|operator|customer service|complain\\w*"
@@ -76,17 +82,25 @@ public class AgentGatewayService {
     public GatewayResult handle(String channel, String externalId, String displayName, String message) {
         User user = resolveUser(channel, externalId, displayName);
 
+        List<Map<String, String>> history = loadHistory(channel, externalId);
         AgentResult result = null;
         String reason = null;
         CurrentUser.setAgentUser(user.getId());
         CurrentUser.setAgentRole(CAPPED_ROLE);
         try {
-            result = omniServeService.askAgentWithSteps(message);
+            result = omniServeService.askAgentWithSteps(message, history);
         } catch (Exception e) {
             log.error("Agent failed for {}:{}", channel, externalId, e);
             reason = "agent_error";
         } finally {
             CurrentUser.clearAgentUser();
+        }
+
+        // The LLM layer reports its own failures as plain reply text. Never show that to customers.
+        if (result != null && isProviderFailure(result.reply())) {
+            log.error("LLM provider failure for {}:{}: {}", channel, externalId, result.reply());
+            reason = "agent_error";
+            result = null;
         }
 
         List<AgentStep> steps = (result == null || result.steps() == null) ? List.of() : result.steps();
@@ -110,6 +124,11 @@ public class AgentGatewayService {
         return new GatewayResult(reply, reason != null, reason, ticketId, tools);
     }
 
+    static boolean isProviderFailure(String reply) {
+        return reply != null && (reply.startsWith("Failed to communicate with LLM provider")
+                || reply.startsWith("Error: Received empty response from LLM"));
+    }
+
     /** Returns why a human should step in, or null when the AI answer can stand. */
     static String detectHandoffReason(String message, String reply, List<AgentStep> steps) {
         if (message != null && HUMAN_REQUEST.matcher(message).find()) {
@@ -131,6 +150,32 @@ public class AgentGatewayService {
             }
         }
         return null;
+    }
+
+    /** Last few exchanges from this chat (oldest first), so the agent remembers the conversation. */
+    private List<Map<String, String>> loadHistory(String channel, String externalId) {
+        List<ConversationLog> recent = logs.findTop6ByChannelAndExternalIdOrderByIdDesc(channel, externalId);
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(HISTORY_WINDOW_MINUTES);
+        List<ConversationLog> fresh = new ArrayList<>();
+        for (ConversationLog l : recent) {
+            if (l.getCreatedAt() != null && l.getCreatedAt().isBefore(cutoff)) {
+                break;
+            }
+            fresh.add(l);
+        }
+        Collections.reverse(fresh);
+        List<Map<String, String>> history = new ArrayList<>();
+        for (ConversationLog l : fresh) {
+            history.add(Map.of("role", "user", "content", clip(l.getUserMessage())));
+            String reply = l.getReply() == null ? "" : l.getReply().replace(HANDOFF_NOTICE, "");
+            history.add(Map.of("role", "assistant", "content", clip(reply)));
+        }
+        return history;
+    }
+
+    private static String clip(String s) {
+        if (s == null) return "";
+        return s.length() > 1000 ? s.substring(0, 1000) : s;
     }
 
     private User resolveUser(String channel, String externalId, String displayName) {

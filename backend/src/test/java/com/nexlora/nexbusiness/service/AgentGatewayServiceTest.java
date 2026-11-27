@@ -3,6 +3,7 @@ package com.nexlora.nexbusiness.service;
 import com.nexlora.nexbusiness.agent.AgentResult;
 import com.nexlora.nexbusiness.agent.AgentStep;
 import com.nexlora.nexbusiness.entity.ChannelIdentity;
+import com.nexlora.nexbusiness.entity.ConversationLog;
 import com.nexlora.nexbusiness.entity.HandoffTicket;
 import com.nexlora.nexbusiness.entity.User;
 import com.nexlora.nexbusiness.repository.ChannelIdentityRepository;
@@ -21,12 +22,15 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -70,7 +74,7 @@ class AgentGatewayServiceTest {
 
     @Test
     void unknownIdentityGetsNewCustomerAccountAndLink() {
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("Hello!"));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("Hello!"));
 
         service.handle("telegram", "555", "Nimal", "hi");
 
@@ -95,7 +99,7 @@ class AgentGatewayServiceTest {
         when(identities.findByChannelAndExternalId("telegram", "999")).thenReturn(Optional.of(link));
         when(users.findById(1L)).thenReturn(Optional.of(admin));
         // The mocked agent reports which role/user it was run with
-        when(omni.askAgentWithSteps(anyString()))
+        when(omni.askAgentWithSteps(anyString(), anyList()))
                 .thenAnswer(i -> answer(CurrentUser.agentRole() + "/" + CurrentUser.agentUser()));
 
         GatewayResult r = service.handle("telegram", "999", "x", "hi");
@@ -106,7 +110,7 @@ class AgentGatewayServiceTest {
 
     @Test
     void normalAnswerNeedsNoHumanAndIsLogged() {
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("We have 43 in stock."));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("We have 43 in stock."));
 
         GatewayResult r = service.handle("telegram", "1", "A", "How many cups?");
 
@@ -118,7 +122,7 @@ class AgentGatewayServiceTest {
 
     @Test
     void humanRequestCreatesTicket() {
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("Sure."));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("Sure."));
 
         GatewayResult r = service.handle("telegram", "1", "A", "I want to talk to a human please");
 
@@ -131,7 +135,7 @@ class AgentGatewayServiceTest {
     @Test
     void toolErrorTriggersHandoff() {
         AgentStep bad = new AgentStep(1, "checkStock", Map.of(), Map.of("error", "Tool error: db down"), false);
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("Something went wrong.", bad));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("Something went wrong.", bad));
 
         GatewayResult r = service.handle("telegram", "1", "A", "stock?");
 
@@ -144,7 +148,7 @@ class AgentGatewayServiceTest {
     void validationErrorDoesNotTriggerHandoff() {
         AgentStep notFound = new AgentStep(1, "requestRefundApproval", Map.of(),
                 Map.of("requested", false, "error", "Order 3 not found"), false);
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("I couldn't find that order.", notFound));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("I couldn't find that order.", notFound));
 
         GatewayResult r = service.handle("telegram", "1", "A", "refund order 3");
 
@@ -155,7 +159,7 @@ class AgentGatewayServiceTest {
 
     @Test
     void unsureAnswerTriggersHandoff() {
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("That is not mentioned in the documents."));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("That is not mentioned in the documents."));
 
         GatewayResult r = service.handle("telegram", "1", "A", "refund policy?");
 
@@ -165,7 +169,7 @@ class AgentGatewayServiceTest {
 
     @Test
     void agentCrashGivesSafeReplyAndTicket() {
-        when(omni.askAgentWithSteps(anyString())).thenThrow(new RuntimeException("groq down"));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenThrow(new RuntimeException("groq down"));
 
         GatewayResult r = service.handle("telegram", "1", "A", "hello");
 
@@ -176,13 +180,69 @@ class AgentGatewayServiceTest {
     }
 
     @Test
+    void recentConversationIsPassedToTheAgentOldestFirst() {
+        ConversationLog newer = new ConversationLog();
+        newer.setUserMessage("because they were damaged");
+        newer.setReply("Which order ID?");
+        ConversationLog older = new ConversationLog();
+        older.setUserMessage("refund please");
+        older.setReply("What is the reason?");
+        when(logs.findTop6ByChannelAndExternalIdOrderByIdDesc("telegram", "1"))
+                .thenReturn(List.of(newer, older));
+        List<java.util.Map<String, String>> seen = new ArrayList<>();
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenAnswer(i -> {
+            seen.addAll(i.getArgument(1));
+            return answer("ok");
+        });
+
+        service.handle("telegram", "1", "A", "order 999");
+
+        assertEquals(4, seen.size());
+        assertEquals("user", seen.get(0).get("role"));
+        assertEquals("refund please", seen.get(0).get("content"));
+        assertEquals("assistant", seen.get(3).get("role"));
+        assertEquals("Which order ID?", seen.get(3).get("content"));
+    }
+
+    @Test
+    void oldConversationIsNotPassedToTheAgent() {
+        ConversationLog stale = new ConversationLog();
+        stale.setUserMessage("old question");
+        stale.setReply("old answer");
+        stale.setCreatedAt(LocalDateTime.now().minusHours(2));
+        when(logs.findTop6ByChannelAndExternalIdOrderByIdDesc("telegram", "1"))
+                .thenReturn(List.of(stale));
+        List<java.util.Map<String, String>> seen = new ArrayList<>();
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenAnswer(i -> {
+            seen.addAll(i.getArgument(1));
+            return answer("ok");
+        });
+
+        service.handle("telegram", "1", "A", "hello");
+
+        assertTrue(seen.isEmpty());
+    }
+
+    @Test
+    void llmProviderFailureTextIsHiddenFromCustomer() {
+        when(omni.askAgentWithSteps(anyString(), anyList()))
+                .thenReturn(answer("Failed to communicate with LLM provider: Groq LLM call failed"));
+
+        GatewayResult r = service.handle("telegram", "1", "A", "hello");
+
+        assertEquals(AgentGatewayService.SAFE_REPLY, r.reply());
+        assertTrue(r.needsHuman());
+        assertEquals("agent_error", r.handoffReason());
+    }
+
+    @Test
     void openTicketIsReusedNotDuplicated() {
         HandoffTicket open = new HandoffTicket();
         open.setId(3L);
         when(tickets.save(any(HandoffTicket.class))).thenAnswer(i -> i.getArgument(0));
         when(tickets.findFirstByChannelAndExternalIdAndStatusOrderByIdDesc("telegram", "1", HandoffTicket.OPEN))
                 .thenReturn(Optional.of(open));
-        when(omni.askAgentWithSteps(anyString())).thenReturn(answer("ok"));
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("ok"));
 
         service.handle("telegram", "1", "A", "I need a manager");
 
