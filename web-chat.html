@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexBusiness AI Agent — Web Chat</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .chat-card { width: 100%; max-width: 520px; height: 85vh; background: #1e293b; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.45); border: 1px solid #334155; }
+    .header { padding: 16px 20px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .header h2 { margin: 0; font-size: 16px; color: #38bdf8; }
+    .badge { font-size: 11px; background: #064e3b; color: #34d399; padding: 3px 8px; border-radius: 999px; }
+    .messages { flex: 1; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .msg { max-width: 82%; padding: 11px 14px; border-radius: 12px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
+    .user { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 2px; }
+    .bot { align-self: flex-start; background: #334155; color: #f1f5f9; border-bottom-left-radius: 2px; }
+    .meta { font-size: 11px; color: #94a3b8; margin-top: 5px; }
+    .handoff { border: 1px solid #f59e0b; background: #451a03; }
+    .input-bar { display: flex; gap: 10px; padding: 14px; background: #0f172a; border-top: 1px solid #334155; }
+    input { flex: 1; padding: 11px 14px; border-radius: 10px; border: 1px solid #475569; background: #1e293b; color: #fff; outline: none; font-size: 14px; }
+    input:focus { border-color: #38bdf8; }
+    button { padding: 11px 18px; border: none; border-radius: 10px; background: #38bdf8; color: #0f172a; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="chat-card">
+    <div class="header">
+      <h2>NexBusiness AI Assistant</h2>
+      <span class="badge">n8n + Spring Boot</span>
+    </div>
+    <div class="messages" id="messages">
+      <div class="msg bot">Hello! Ask me about product stock, order status, or request a refund/support ticket.</div>
+    </div>
+    <form class="input-bar" id="chatForm">
+      <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" required />
+      <button type="submit" id="sendBtn">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const WEBHOOK_URL = "http://localhost:5678/webhook/nexbusiness-chat";
+    const sessionId = "web-" + Math.random().toString(36).substring(2, 9);
+    const messagesEl = document.getElementById("messages");
+    const form = document.getElementById("chatForm");
+    const input = document.getElementById("msgInput");
+    const btn = document.getElementById("sendBtn");
+
+    function addMessage(text, type, metaText = "", isHandoff = false) {
+      const div = document.createElement("div");
+      div.className = `msg ${type} ${isHandoff ? "handoff" : ""}`;
+      div.textContent = text;
+      if (metaText) {
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = metaText;
+        div.appendChild(meta);
+      }
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      input.value = "";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            name: "Asela (Web Test)",
+            message: text
+          })
+        });
+        const data = await res.json();
+        const tools = (data.tools_used && data.tools_used.length) ? `Tools: ${data.tools_used.join(", ")}` : "";
+        const ticket = data.handoff_ticket_id ? ` | Ticket #${data.handoff_ticket_id}` : "";
+        addMessage(data.reply || JSON.stringify(data), "bot", tools + ticket, Boolean(data.needs_human));
+      } catch (err) {
+        addMessage("Connection error: Make sure the n8n Web Chat workflow is Published/Active.\n" + err.message, "bot");
+      } finally {
+        btn.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -44,7 +44,7 @@ class LlmProperties {
         private String baseUrl = "https://api.groq.com/openai/v1/chat/completions";
         private String apiKey;
         private String model = "llama-3.3-70b-versatile";
-        private int timeoutMs = 8000;
+        private int timeoutMs = 30000;
 
         public String getProvider() { return provider; }
         public void setProvider(String provider) { this.provider = provider; }

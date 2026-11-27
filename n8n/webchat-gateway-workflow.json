@@ -1,0 +1,102 @@
+{
+  "name": "NexBusiness Omnichannel Gateway (Web Chat)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexbusiness-chat",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-trigger-web-1",
+      "name": "Web Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "nexbusiness-chat-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.19.0.2:8080/api/agent/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.AGENT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'web', externalId: String($json.body.sessionId || 'web-user-1'), name: $json.body.name || 'Web Visitor', message: $json.body.message || '' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "http-agent-web-1",
+      "name": "Call Spring Boot Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook-web-1",
+      "name": "Respond to Web Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [760, 300]
+    }
+  ],
+  "connections": {
+    "Web Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Call Spring Boot Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Spring Boot Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Web Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
