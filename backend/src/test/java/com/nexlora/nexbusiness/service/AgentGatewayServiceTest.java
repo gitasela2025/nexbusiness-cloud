@@ -129,7 +129,8 @@ class AgentGatewayServiceTest {
         assertTrue(r.needsHuman());
         assertEquals("human_requested", r.handoffReason());
         assertEquals(7L, r.handoffTicketId());
-        assertTrue(r.reply().contains("flagged"));
+        assertTrue(r.reply().startsWith(AgentGatewayService.HUMAN_REPLY_PREFIX));
+        assertTrue(r.reply().contains("#7"));
     }
 
     @Test
@@ -233,6 +234,26 @@ class AgentGatewayServiceTest {
         assertEquals(AgentGatewayService.SAFE_REPLY, r.reply());
         assertTrue(r.needsHuman());
         assertEquals("agent_error", r.handoffReason());
+    }
+
+    @Test
+    void humanRequestReplyHidesAgentOwnTicketNumber() {
+        when(omni.askAgentWithSteps(anyString(), anyList()))
+                .thenReturn(answer("Logged as support ticket #6."));
+
+        GatewayResult r = service.handle("telegram", "1", "A", "I want to talk to a human");
+
+        assertTrue(r.needsHuman());
+        assertFalse(r.reply().contains("#6"));
+    }
+
+    @Test
+    void humanRequestReplyShowsOnlyHandoffTicketNumber() {
+        when(omni.askAgentWithSteps(anyString(), anyList())).thenReturn(answer("Sure."));
+
+        GatewayResult r = service.handle("telegram", "1", "A", "I want to talk to a human");
+
+        assertTrue(r.reply().startsWith(AgentGatewayService.HUMAN_REPLY_PREFIX));
     }
 
     @Test

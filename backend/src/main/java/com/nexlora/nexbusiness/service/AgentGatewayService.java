@@ -40,6 +40,8 @@ public class AgentGatewayService {
 
     static final String SAFE_REPLY =
             "Sorry, I can't answer that right now. A team member will follow up with you.";
+    static final String HUMAN_REPLY_PREFIX =
+            "I've passed your request to a human team member. Your ticket number is #";
     static final String HANDOFF_NOTICE =
             "\n\nI've flagged this conversation for a human team member.";
 
@@ -113,7 +115,10 @@ public class AgentGatewayService {
         Long ticketId = null;
         if (reason != null) {
             ticketId = openOrReuseTicket(channel, externalId, user.getId(), reason, message);
-            if (!"agent_error".equals(reason)) {
+            if ("human_requested".equals(reason) && ticketId != null) {
+                // One clear message and one ticket number, not the agent's own CRM ticket text.
+                reply = HUMAN_REPLY_PREFIX + ticketId + ". We will get back to you shortly.";
+            } else if (!"agent_error".equals(reason)) {
                 reply = reply + HANDOFF_NOTICE;
             }
         }
